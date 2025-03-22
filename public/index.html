@@ -1,213 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHS Archive - Secure File Hosting</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <style>
+        :root {
+            --primary: #9370db;
+            --background: #1a1a1a;
+            --surface: #2d2d2d;
+            --text: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #1a1a1a;
-            color: #e0e0e0;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem 1rem;
         }
-        .nav {
-            border-bottom: 2px solid #ffffff;
-            padding: 15px 0;
-            margin-bottom: 25px;
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1.5rem;
         }
-        .nav a {
-            color: #9370db;
+
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .slogan {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        nav a {
+            color: var(--primary);
             text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
-            padding: 5px 10px;
-            border-radius: 3px;
+            font-weight: 600;
+            transition: opacity 0.2s;
         }
-        .nav a.active {
-            background: #4b0082;
-            color: white;
+
+        nav a:hover {
+            opacity: 0.8;
         }
-        .nav a:hover:not(.active) {
-            color: #ffffff;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px 0;
-        }
-        .tab-content.active {
-            display: block;
-        }
+
         .upload-section {
-            background: #2d2d2d;
-            padding: 30px;
-            border: 1px solid #404040;
-            border-radius: 5px;
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
             text-align: center;
         }
-        input[type="file"] {
-            background: #333;
-            color: #fff;
-            border: 1px solid #4b0082;
-            padding: 8px 15px;
-            margin: 5px;
+
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            margin: 1.5rem 0;
             cursor: pointer;
+            transition: background 0.2s;
         }
-        button {
-            background: #4b0082;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: background 0.3s;
+
+        .drop-zone:hover {
+            background: rgba(147, 112, 219, 0.1);
         }
-        button:hover {
-            background: #5a1a9a;
-        }
-        .link-box {
-            background: #3d3d3d;
-            padding: 20px;
-            margin-top: 20px;
+
+        #fileInput {
             display: none;
-            border-radius: 5px;
         }
-        #fileLink {
-            color: #9370db;
-            word-break: break-all;
-            display: block;
-            margin: 15px 0;
+
+        .button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.2s;
         }
-        .status-message {
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        #status {
+            margin: 1rem 0;
+            min-height: 1.5rem;
+        }
+
+        .success {
             color: #66bb6a;
-            margin: 10px 0;
         }
-        .error-message {
+
+        .error {
             color: #ff4444;
         }
-        .pricing-list {
-            list-style: none;
-            padding: 0;
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
         }
-        .pricing-list li {
-            background: #2d2d2d;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <center>
-        <h1 style="color: #ffffff; margin-bottom: 5px;">CHS ARCHIVE</h1>
-        <p style="color: #ffffff; margin-top: 0; font-size: 14px;">Reliable File Hosting – Fast, Simple.</p>
-        
-        <div class="nav">
-            <a href="#upload" class="active" onclick="showTab('upload')">Upload</a>
-            <a href="#pricing" onclick="showTab('pricing')">Pricing</a>
-            <a href="#help" onclick="showTab('help')">Help</a>
-        </div>
+    <div class="container">
+        <header>
+            <h1>CHS ARCHIVE</h1>
+            <p class="slogan">Fast and reliable file hosting service</p>
+            <nav>
+                <a href="#upload">Upload</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#help">Help</a>
+            </nav>
+        </header>
 
-        <!-- Upload Tab -->
-        <div id="upload" class="tab-content active">
-            <div class="upload-section">
-                <input type="file" id="fileInput" accept="*">
-                <button onclick="uploadFile()">Upload Now</button>
-                <p class="status-message" id="fileStatus">No file selected</p>
-                
-                <div class="link-box" id="linkBox">
-                    <strong>Shareable Link:</strong>
-                    <span id="fileLink"></span>
-                    <button onclick="copyLink()">Copy Link</button>
+        <main>
+            <section class="upload-section">
+                <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <p>Drag and drop files here or</p>
+                    <button class="button">Choose File</button>
+                    <p>Max file size: 10MB</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Pricing Tab -->
-        <div id="pricing" class="tab-content">
-            <h2>Pricing Plans</h2>
-            <ul class="pricing-list">
-                <li>
-                    <strong>Basic</strong><br>
-                    Free - 5GB storage<br>
-                    Basic encryption
-                </li>
-                <li>
-                    <strong>Pro</strong><br>
-                    $3/month - Unlimited storage<br>
-                    Priority support
-                </li>
-            </ul>
-        </div>
-
-        <!-- Help Tab -->
-        <div id="help" class="tab-content">
-            <h2> Help & Support</h2>
-            <div style="text-align: left; max-width: 600px; margin: 0 auto;">
-                <h3>Contact Support</h3>
-                <p>Email: <a href="mailto:support@chsarchive.com" style="color: #9370db;">support@chsarchive.com</a></p>
+                <input type="file" id="fileInput">
                 
-                <h3> Documentation</h3>
-                <p>Check our <a href="#" style="color: #9370db;">user guide</a> for detailed instructions</p>
-                
-                <h3> Status Page</h3>
-                <p>View our <a href="#" style="color: #9370db;">service status</a> for uptime information</p>
-            </div>
-        </div>
+                <div id="status"></div>
+                <button class="button" onclick="uploadFile()" id="uploadButton">
+                    Upload Files
+                </button>
+            </section>
+        </main>
 
-        <footer style="margin-top: 50px; color: #666;">
-            <small>Your files. Your control. Always secure. 🔒</small>
+        <footer>
+            <p>© 2024 CHS Archive | Your files. Your control. Always secure.</p>
         </footer>
-    </center>
+    </div>
 
     <script>
-        // Tab navigation
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
-            
-            // Update active nav link
-            document.querySelectorAll('.nav a').forEach(link => {
-                link.classList.toggle('active', link.getAttribute('href') === `#${tabName}`);
-            });
-        }
+        const BACKEND_URL = 'https://chs-archive-backend.onrender.com';
+        let currentFile = null;
 
-        // File input handler
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            document.getElementById('fileStatus').textContent = file ? 
-                `Selected: ${file.name} (${formatFileSize(file.size)})` : 
-                'No file selected';
+        // Drag and drop handlers
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.querySelector('.drop-zone').style.background = 'rgba(147, 112, 219, 0.1)';
         });
 
-        // Upload function
-        async function uploadFile() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            const statusElement = document.getElementById('fileStatus');
-            const linkBox = document.getElementById('linkBox');
-            const linkElement = document.getElementById('fileLink');
+        document.addEventListener('dragleave', () => {
+            document.querySelector('.drop-zone').style.background = '';
+        });
 
-            if (!file) {
-                statusElement.textContent = 'Please select a file first!';
-                statusElement.className = 'error-message';
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.querySelector('.drop-zone').style.background = '';
+            if (e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            currentFile = file;
+            document.getElementById('status').innerHTML = `
+                Selected file: <strong>${file.name}</strong> (${formatFileSize(file.size)})
+            `;
+        }
+
+        async function uploadFile() {
+            const status = document.getElementById('status');
+            const button = document.getElementById('uploadButton');
+            
+            if (!currentFile) {
+                status.innerHTML = '<span class="error">Please select a file first!</span>';
                 return;
             }
 
             try {
-                statusElement.textContent = 'Uploading...';
-                statusElement.className = 'status-message';
-                
-                const formData = new FormData();
-                formData.append('file', file);
+                status.innerHTML = '<div class="loading"></div> Uploading...';
+                button.disabled = true;
 
-                const response = await fetch('/upload', {
+                const formData = new FormData();
+                formData.append('file', currentFile);
+
+                const response = await fetch(`${BACKEND_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -215,34 +235,30 @@
                 if (!response.ok) throw new Error('Upload failed');
                 
                 const data = await response.json();
-                linkElement.textContent = data.link;
-                linkBox.style.display = 'block';
-                statusElement.textContent = 'Upload successful!';
-                fileInput.value = '';
+                status.innerHTML = `
+                    <span class="success">Upload successful!</span><br>
+                    <a href="${data.url}" target="_blank">${data.filename}</a>
+                    (${formatFileSize(data.size)})
+                `;
 
+                // Copy URL to clipboard
+                navigator.clipboard.writeText(data.url);
+                
             } catch (error) {
-                statusElement.textContent = `Error: ${error.message}`;
-                statusElement.className = 'error-message';
+                console.error('Upload error:', error);
+                status.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            } finally {
+                button.disabled = false;
+                currentFile = null;
+                document.getElementById('fileInput').value = '';
             }
         }
 
-        // Copy link function
-        function copyLink() {
-            const link = document.getElementById('fileLink').textContent;
-            navigator.clipboard.writeText(link)
-                .then(() => alert('Link copied to clipboard!'))
-                .catch(() => alert('Failed to copy link!'));
-        }
-
-        // File size formatter
         function formatFileSize(bytes) {
             if (bytes >= 1073741824) return `${(bytes/1073741824).toFixed(2)} GB`;
             if (bytes >= 1048576) return `${(bytes/1048576).toFixed(2)} MB`;
             return `${(bytes/1024).toFixed(2)} KB`;
         }
-
-        // Initialize default tab
-        showTab('upload');
     </script>
 </body>
 </html>
