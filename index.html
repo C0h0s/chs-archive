@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CHS Archive - Secure File Hosting</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .nav {
+            border-bottom: 2px solid #ffffff;
+            padding: 15px 0;
+            margin-bottom: 25px;
+        }
+        .nav a {
+            color: #9370db;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        .nav a.active {
+            background: #4b0082;
+            color: white;
+        }
+        .nav a:hover:not(.active) {
+            color: #ffffff;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .upload-section {
+            background: #2d2d2d;
+            padding: 30px;
+            border: 1px solid #404040;
+            border-radius: 5px;
+            text-align: center;
+        }
+        input[type="file"] {
+            background: #333;
+            color: #fff;
+            border: 1px solid #4b0082;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button {
+            background: #4b0082;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a1a9a;
+        }
+        .link-box {
+            background: #3d3d3d;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            border-radius: 5px;
+        }
+        #fileLink {
+            color: #9370db;
+            word-break: break-all;
+            display: block;
+            margin: 15px 0;
+        }
+        .status-message {
+            color: #66bb6a;
+            margin: 10px 0;
+        }
+        .error-message {
+            color: #ff4444;
+        }
+        .pricing-list {
+            list-style: none;
+            padding: 0;
+        }
+        .pricing-list li {
+            background: #2d2d2d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <h1 style="color: #ffffff; margin-bottom: 5px;">CHS ARCHIVE</h1>
+        <p style="color: #ffffff; margin-top: 0; font-size: 14px;">Reliable File Hosting – Fast, Simple.</p>
+        
+        <div class="nav">
+            <a href="#upload" class="active" onclick="showTab('upload')">Upload</a>
+            <a href="#pricing" onclick="showTab('pricing')">Pricing</a>
+            <a href="#help" onclick="showTab('help')">Help</a>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <div class="upload-section">
+                <input type="file" id="fileInput" accept="*">
+                <button onclick="uploadFile()">Upload Now</button>
+                <p class="status-message" id="fileStatus">No file selected</p>
+                
+                <div class="link-box" id="linkBox">
+                    <strong>Shareable Link:</strong>
+                    <span id="fileLink"></span>
+                    <button onclick="copyLink()">Copy Link</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Tab -->
+        <div id="pricing" class="tab-content">
+            <h2>Pricing Plans</h2>
+            <ul class="pricing-list">
+                <li>
+                    <strong>Basic</strong><br>
+                    Free - 5GB storage<br>
+                    Basic encryption
+                </li>
+                <li>
+                    <strong>Pro</strong><br>
+                    $3/month - Unlimited storage<br>
+                    Priority support
+                </li>
+            </ul>
+        </div>
+
+        <!-- Help Tab -->
+        <div id="help" class="tab-content">
+            <h2> Help & Support</h2>
+            <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                <h3>Contact Support</h3>
+                <p>Email: <a href="mailto:support@chsarchive.com" style="color: #9370db;">support@chsarchive.com</a></p>
+                
+                <h3> Documentation</h3>
+                <p>Check our <a href="#" style="color: #9370db;">user guide</a> for detailed instructions</p>
+                
+                <h3> Status Page</h3>
+                <p>View our <a href="#" style="color: #9370db;">service status</a> for uptime information</p>
+            </div>
+        </div>
+
+        <footer style="margin-top: 50px; color: #666;">
+            <small>Your files. Your control. Always secure. 🔒</small>
+        </footer>
+    </center>
+
+    <script>
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Update active nav link
+            document.querySelectorAll('.nav a').forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === `#${tabName}`);
+            });
+        }
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            document.getElementById('fileStatus').textContent = file ? 
+                `Selected: ${file.name} (${formatFileSize(file.size)})` : 
+                'No file selected';
+        });
+
+        // Upload function
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const statusElement = document.getElementById('fileStatus');
+            const linkBox = document.getElementById('linkBox');
+            const linkElement = document.getElementById('fileLink');
+
+            if (!file) {
+                statusElement.textContent = 'Please select a file first!';
+                statusElement.className = 'error-message';
+                return;
+            }
+
+            try {
+                statusElement.textContent = 'Uploading...';
+                statusElement.className = 'status-message';
+                
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+                
+                const data = await response.json();
+                linkElement.textContent = data.link;
+                linkBox.style.display = 'block';
+                statusElement.textContent = 'Upload successful!';
+                fileInput.value = '';
+
+            } catch (error) {
+                statusElement.textContent = `Error: ${error.message}`;
+                statusElement.className = 'error-message';
+            }
+        }
+
+        // Copy link function
+        function copyLink() {
+            const link = document.getElementById('fileLink').textContent;
+            navigator.clipboard.writeText(link)
+                .then(() => alert('Link copied to clipboard!'))
+                .catch(() => alert('Failed to copy link!'));
+        }
+
+        // File size formatter
+        function formatFileSize(bytes) {
+            if (bytes >= 1073741824) return `${(bytes/1073741824).toFixed(2)} GB`;
+            if (bytes >= 1048576) return `${(bytes/1048576).toFixed(2)} MB`;
+            return `${(bytes/1024).toFixed(2)} KB`;
+        }
+
+        // Initialize default tab
+        showTab('upload');
+    </script>
+</body>
+</html>
