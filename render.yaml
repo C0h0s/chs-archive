@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: chs-archive-backend
-    runtime: node
-    buildCommand: npm install
-    startCommand: node server.js
-    envVars:
-      - key: UPLOAD_DIR
-        value: /data/uploads
