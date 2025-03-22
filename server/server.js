@@ -1,187 +1,138 @@
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
-const crypto = require('crypto');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 10000;
 
-// File storage configuration
+// ======================
+// Security Middleware
+// ======================
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"]
+    }
+  }
+}));
+
+app.use(cors({
+  origin: [
+    'https://c0h0s.github.io', // GitHub Pages
+    'http://localhost:3000'    // Local development
+  ],
+  methods: ['POST', 'GET']
+}));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // Limit each IP to 100 requests per window
+});
+app.use(limiter);
+
+// ======================
+// File Upload Config
+// ======================
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+
+// Create upload directory if not exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (!fs.existsSync('public/uploads')) {
-      fs.mkdirSync('public/uploads', { recursive: true });
-    }
-    cb(null, 'public/uploads/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const originalName = sanitizeName(file.originalname);
-    const uniqueName = `${uuidv4()}-${originalName}`;
-    cb(null, uniqueName);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const upload = multer({ storage });
-let downloadCounts = {};
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|pdf|txt/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
 
-// Helper functions
-const sanitizeName = (name) => name.replace(/[^a-z0-9_.-]/gi, '_');
-const getFileHash = (filePath) => crypto.createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
-const formatSize = (bytes) => {
-  if (bytes >= 1073741824) return `${(bytes/1073741824).toFixed(1)} GB`;
-  if (bytes >= 1048576) return `${(bytes/1048576).toFixed(1)} MB`;
-  return `${(bytes/1024).toFixed(1)} KB`;
+  if (extname && mimetype) {
+    cb(null, true);
+  } else {
+    cb(new Error('Error: Only images (JPEG/JPG/PNG/GIF) and documents (PDF/TXT) allowed!'));
+  }
 };
 
-// Middleware
-app.use(express.static('public'));
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: fileFilter
+});
 
+// ======================
 // Routes
+// ======================
 app.post('/upload', upload.single('file'), (req, res) => {
   try {
-    const fileUrl = `${req.protocol}://${req.get('host')}/file/${req.file.filename}`;
-    res.json({ 
-      link: fileUrl,
-      originalName: sanitizeName(req.file.originalname)
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileUrl = `${process.env.BACKEND_URL}/${req.file.filename}`;
+    res.status(201).json({
+      message: 'File uploaded successfully',
+      url: fileUrl,
+      filename: req.file.filename,
+      size: req.file.size
     });
+
   } catch (error) {
-    res.status(500).json({ error: 'Upload failed' });
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.get('/file/:id', (req, res) => {
-  const filePath = path.join(__dirname, 'public/uploads', req.params.id);
+app.get('/files/:filename', (req, res) => {
+  const filePath = path.join(uploadDir, req.params.filename);
   
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send('File not found');
+  if (fs.existsSync(filePath)) {
+    res.download(filePath);
+  } else {
+    res.status(404).json({ error: 'File not found' });
   }
+});
 
-  const stats = fs.statSync(filePath);
-  const fileHash = getFileHash(filePath);
-  const fileName = req.params.id.split('-').slice(1).join('-');
-  const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(fileName);
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    uploadDir: uploadDir,
+    storage: `${(fs.statSync(uploadDir).size / 1024 / 1024).toFixed(2)}MB used`
+  });
+});
 
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>${fileName} - CHS Archive</title>
-      <style>
-        :root {
-          --primary:rgb(255, 255, 255);
-          --background: #1a1a1a;
-          --surface: #2d2d2d;
-          --text: #e0e0e0;
-        }
-        body { 
-          font-family: Arial, sans-serif; 
-          background: var(--background); 
-          color: var(--text); 
-          margin: 0; 
-          line-height: 1.6;
-        }
-        .header {
-          background: var(--surface);
-          padding: 2rem 1rem;
-          text-align: center;
-          border-bottom: 3px solid var(--primary);
-        }
-        .site-title {
-          color: #fff;
-          margin: 0;
-          font-size: 2.5rem;
-          letter-spacing: -1px;
-        }
-        .slogan {
-          color: var(--primary);
-          margin: 0.5rem 0 0;
-          font-size: 1.1rem;
-          font-weight: 300;
-        }
-        .container {
-          max-width: 800px;
-          margin: 2rem auto;
-          padding: 2rem;
-          background: var(--surface);
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .file-info {
-          margin: 1.5rem 0;
-          padding: 1.5rem;
-          background: rgba(0,0,0,0.2);
-          border-radius: 6px;
-        }
-        .button {
-          background: var(--primary);
-          color: white;
-          padding: 0.8rem 1.5rem;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        }
-        .button:hover {
-          opacity: 0.9;
-        }
-        .warning {
-          color: #ff6666;
-          margin-top: 2rem;
-          padding: 1rem;
-          background: rgba(255,0,0,0.1);
-          border-radius: 4px;
-        }
-        img.preview {
-          max-width: 100%;
-          border-radius: 6px;
-          margin-bottom: 1.5rem;
-          border: 2px solid var(--primary);
-        }
-      </style>
-    </head>
-    <body>
-      <header class="header">
-        <h1 class="site-title">CHS ARCHIVE</h1>
-        <p class="slogan">Fast and reliable file hosting service</p>
-      </header>
-
-      <div class="container">
-        ${isImage ? `<img src="/download/${req.params.id}" class="preview" alt="File preview">` : ''}
-        
-        <div class="file-info">
-          <h2>${fileName}</h2>
-          <p><strong>Size:</strong> ${formatSize(stats.size)}</p>
-          <p><strong>SHA-1:</strong> ${fileHash}</p>
-          <p><strong>Downloads:</strong> ${downloadCounts[req.params.id] || 0}</p>
-        </div>
-
-        <button class="button" onclick="window.location.href='/download/${req.params.id}'">
-          Download File
-        </button>
-
-        <div class="warning">
-          <p>⚠️ All downloads happen directly in this window.<br>
-          Report abusive content: <a href="mailto:abuse@chsarchive.com" style="color: #ff6666;">abuse@chsarchive.com</a></p>
-        </div>
-      </div>
-    </body>
-    </html>
+// ======================
+// Server Setup
+// ======================
+app.listen(port, () => {
+  console.log(`
+  ==================================
+   CHS Archive Backend Running!
+   Port: ${port}
+   Upload Directory: ${uploadDir}
+   Environment: ${process.env.NODE_ENV || 'development'}
+  ==================================
   `);
 });
 
-app.get('/download/:id', (req, res) => {
-  const filePath = path.join(__dirname, 'public/uploads', req.params.id);
-  
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send('File not found');
-  }
-
-  downloadCounts[req.params.id] = (downloadCounts[req.params.id] || 0) + 1;
-  res.download(filePath, req.query.originalname);
-});
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+process.on('SIGINT', () => {
+  console.log('\nServer shutting down...');
+  process.exit(0);
 });
