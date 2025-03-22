@@ -1,0 +1,20 @@
+# fly.toml
+app = "chs-archive"
+primary_region = "fra"
+
+[build]
+  image = "node:18"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = false
+
+[[mounts]]
+  source = "chs_storage"
+  destination = "/data"
+
+[vm]
+  memory = "2048mb"
+  cpus = 2
