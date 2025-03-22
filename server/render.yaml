@@ -1,0 +1,12 @@
+# server/render.yaml
+services:
+  - type: web
+    name: chs-archive-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: UPLOAD_DIR
+        value: /data/uploads
